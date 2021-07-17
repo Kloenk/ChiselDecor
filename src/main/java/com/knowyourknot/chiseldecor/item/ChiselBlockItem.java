@@ -1,7 +1,5 @@
 package com.knowyourknot.chiseldecor.item;
 
-import java.util.List;
-
 import net.minecraft.block.Block;
 import net.minecraft.client.item.TooltipContext;
 import net.minecraft.item.BlockItem;
@@ -11,6 +9,8 @@ import net.minecraft.text.Text;
 import net.minecraft.text.TranslatableText;
 import net.minecraft.util.Formatting;
 import net.minecraft.world.World;
+
+import java.util.List;
 
 public class ChiselBlockItem extends BlockItem {
     private final String packDir;
@@ -42,6 +42,4 @@ public class ChiselBlockItem extends BlockItem {
             tooltip.add(new TranslatableText(getTranslationKey() + "." + variantName + ".desc." + i).setStyle(Style.EMPTY.withColor(Formatting.GRAY)));
         }
     }
-
-    
 }
