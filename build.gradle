@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '0.5-SNAPSHOT'
+	id 'fabric-loom' version '0.8-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -16,17 +16,19 @@ repositories {
     // Loom adds the essential maven repositories to download Minecraft and libraries from automatically.
     // See https://docs.gradle.org/current/userguide/declaring_repositories.html
     // for more information about repositories.
+	mavenCentral()
 
 	maven {
-    	url = "https://dl.bintray.com/oroarmor/oroarmor"
-  	}
-
-	maven {
-		url = 'https://raw.githubusercontent.com/Devan-Kerman/Devan-Repo/master/'
+		url = uri("https://storage.googleapis.com/devan-maven/")
 	}
 
 	maven {
 		url "https://maven.shedaniel.me/"
+	}
+
+	maven {
+		name = 'TerraformersMC Archive'
+		url = 'https://raw.githubusercontent.com/TerraformersMC/Archive/main/releases/'
 	}
 }
 
@@ -40,8 +42,13 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
 	// Config file API
-	modImplementation "com.oroarmor:oro-config:${project.oro_config_version}"
-  	include "com.oroarmor:oro-config:${project.oro_config_version}"
+	modImplementation "com.oroarmor:oro-config-fabric:${project.oro_config_version}"
+  	include "com.oroarmor:oro-config-fabric:${project.oro_config_version}"
+
+	// Mod Menu
+	modCompileOnly("com.terraformersmc:modmenu:${project.modmenu_version}") {transitive(false)}
+	modRuntime("com.terraformersmc:modmenu:${project.modmenu_version}")
+	include "com.terraformersmc:modmenu:${project.modmenu_version}"
 
 	// ARRP for generating resource & data packs at runtime
 	modImplementation group: 'net.devtech', name: 'arrp', version: "${project.arrp_version}"
@@ -49,8 +56,9 @@ dependencies {
 
 	// REI API for recipe plugin
 	modCompileOnly "me.shedaniel:RoughlyEnoughItems-api:${project.rei_version}"
-    modRuntime "me.shedaniel:RoughlyEnoughItems:${project.rei_version}"
-	
+	modCompileOnly "me.shedaniel:RoughlyEnoughItems-fabric:${project.rei_version}"
+	modRuntime "me.shedaniel:RoughlyEnoughItems-fabric:${project.rei_version}"
+
 }
 
 processResources {

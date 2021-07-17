@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Arrays;
 
 import com.knowyourknot.chiseldecor.ChiselDecorEntryPoint;
+import com.oroarmor.config.ArrayConfigItem;
 import com.oroarmor.config.Config;
 import com.oroarmor.config.ConfigItem;
 import com.oroarmor.config.ConfigItemGroup;
@@ -24,7 +25,7 @@ public class ChiselDecorConfig extends Config {
 	}
     
     public static class ConfigRoot extends ConfigItemGroup {
-        public static final ConfigItem<String> BLOCK_PACKS = new ConfigItem<>("block_packs", "", "config.chiseldecor.block_packs");
+        public static final ArrayConfigItem<String> BLOCK_PACKS = new ArrayConfigItem<String>("block_packs", new String[]{""}, "config.chiseldecor.block_packs");
 
         public ConfigRoot() {
             super(Arrays.asList(BLOCK_PACKS), "chiseldecor_config");
@@ -32,15 +33,17 @@ public class ChiselDecorConfig extends Config {
     }
 
     public String[] getBlockPackDirs() {
-        ConfigItem<?> dirStringConfigItem = this.getConfigs().get(0).getConfigs().get(0); // bit ugly but ok
+        ConfigItem<?> dirStringConfigItem = this.getConfigs().get(0).getConfigs().get(0);
         Object result = dirStringConfigItem.getValue();
-        if (!(result instanceof String)) {
+        if (!(result instanceof String[])) {
+            ChiselDecorEntryPoint.LOGGER.warn("Blockpacks config invalid. No Blockpacks could be loaded");
             return new String[]{};
         }
-        String dirString = (String) result;
-        String[] blockPackDirs = dirString.replaceAll("\\s+","").split(",");
-        String msg = String.format("Found %d blockpack(s): %s.", blockPackDirs.length, Arrays.toString(blockPackDirs));
-        ChiselDecorEntryPoint.LOGGER.info(msg);
-        return blockPackDirs;
+
+        String[] stringResult = (String[])result;
+        ChiselDecorEntryPoint.LOGGER.info(
+                String.format("Found %d blockpack(s): %s.", stringResult.length, Arrays.toString(stringResult))
+        );
+        return stringResult;
     }
 }

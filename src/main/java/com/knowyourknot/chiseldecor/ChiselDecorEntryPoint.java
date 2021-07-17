@@ -9,6 +9,7 @@ import com.knowyourknot.chiseldecor.data.Recipes;
 import com.knowyourknot.chiseldecor.item.ItemChisel;
 import com.oroarmor.config.command.ConfigCommand;
 
+import net.minecraft.server.command.ServerCommandSource;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -33,14 +34,15 @@ public class ChiselDecorEntryPoint implements ModInitializer {
 	
 	@Override
 	public void onInitialize() {
-		CommandRegistrationCallback.EVENT.register(new ConfigCommand(CONFIG)::register);
+		CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> new ConfigCommand<ServerCommandSource>(CONFIG).register(dispatcher, p -> p.hasPermissionLevel(2)));
 
 		String[] blockPackDirs = CONFIG.getBlockPackDirs();
-		for (int i = 0; i < blockPackDirs.length; i++) {
-			if (blockPackDirs[i].equals("")) {
+		for (String pack : blockPackDirs) {
+			if (pack.equals("")) {
 				continue;
 			}
-			new BlockPack(blockPackDirs[i]).register(RESOURCE_PACK);
+			LOGGER.info("Adding pack: " + pack);
+			new BlockPack(pack).register(RESOURCE_PACK);
 		}
 
 		Registry.register(Registry.ITEM, new Identifier(Ref.MOD_ID, "chisel"), ITEM_CHISEL);

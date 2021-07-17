@@ -8,6 +8,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.util.Hand;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.world.World;
 
 public class ItemDebug extends Item {
@@ -18,7 +19,7 @@ public class ItemDebug extends Item {
 
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
-        System.out.println(world.getTagManager().getBlocks().getTag(new Identifier(Ref.MOD_ID, "test/diamond")).values());
+        System.out.println(world.getTagManager().getOrCreateTagGroup(Registry.BLOCK_KEY).getTag(new Identifier(Ref.MOD_ID, "test/diamond")).values());
         return super.use(world, user, hand);
     }
 }

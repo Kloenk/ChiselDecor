@@ -6,156 +6,146 @@ import java.util.List;
 
 import com.knowyourknot.chiseldecor.block.ChiselGroupLookup;
 
-import org.jetbrains.annotations.NotNull;
-
 import me.shedaniel.math.Point;
 import me.shedaniel.math.Rectangle;
-import me.shedaniel.rei.api.EntryStack;
-import me.shedaniel.rei.api.RecipeCategory;
-import me.shedaniel.rei.api.RecipeDisplay;
-import me.shedaniel.rei.api.RecipeHelper;
-import me.shedaniel.rei.api.plugins.REIPluginV0;
-import me.shedaniel.rei.api.widgets.Slot;
-import me.shedaniel.rei.api.widgets.Widgets;
-import me.shedaniel.rei.gui.widget.Widget;
+import me.shedaniel.rei.api.client.gui.Renderer;
+import me.shedaniel.rei.api.client.gui.widgets.Slot;
+import me.shedaniel.rei.api.client.gui.widgets.Widget;
+import me.shedaniel.rei.api.client.gui.widgets.Widgets;
+import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
+import me.shedaniel.rei.api.client.registry.display.DisplayCategory;
+import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
+import me.shedaniel.rei.api.common.category.CategoryIdentifier;
+import me.shedaniel.rei.api.common.display.Display;
+import me.shedaniel.rei.api.common.entry.EntryIngredient;
+import me.shedaniel.rei.api.common.util.EntryIngredients;
+import me.shedaniel.rei.api.common.util.EntryStacks;
+import net.minecraft.client.resource.language.I18n;
+import net.minecraft.text.Text;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
+
+import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
-import net.minecraft.client.resource.language.I18n;
 import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
 import net.minecraft.tag.ServerTagManagerHolder;
-import net.minecraft.util.Identifier;
+
 
 @Environment(EnvType.CLIENT)
-public class ChiselDecorEntryPointREI implements REIPluginV0 {
-
+public class ChiselDecorEntryPointREI implements REIClientPlugin {
     @Override
-    public Identifier getPluginIdentifier() {
-        return new Identifier(Ref.MOD_ID, "chisel_recipes");
+    public void registerCategories(CategoryRegistry registry) {
+        registry.add(new ChiselCategory());
+
+        registry.addWorkstations(CategoryIdentifier.of(Ref.MOD_ID, "chisel_recipes_category"), EntryStacks.of(ChiselDecorEntryPoint.ITEM_CHISEL));
     }
 
     @Override
-    public void registerPluginCategories(RecipeHelper recipeHelper) {
-        recipeHelper.registerCategory(new ChiselCategory());
-        REIPluginV0.super.registerPluginCategories(recipeHelper);
-    }
-
-    @Override
-    public void registerRecipeDisplays(RecipeHelper recipeHelper) {
+    public void registerDisplays(DisplayRegistry registry) {
         Iterator<String> chiselGroupNames = ChiselGroupLookup.getGroupNameIterator();
         while (chiselGroupNames.hasNext()) {
-            recipeHelper.registerDisplay(new ChiselDisplay(chiselGroupNames.next()));
+            registry.add(new ChiselDisplay(chiselGroupNames.next()));
         }
-        REIPluginV0.super.registerRecipeDisplays(recipeHelper);
     }
 
-    @Override
-    public void registerOthers(RecipeHelper recipeHelper) {
-        recipeHelper.registerWorkingStations(new Identifier(Ref.MOD_ID, "chisel_recipes_category"),
-                EntryStack.create(ChiselDecorEntryPoint.ITEM_CHISEL));
-    }
-
-    public static class ChiselDisplay implements RecipeDisplay {
-        private List<Item> chiselGroupItems;
+    public static class ChiselDisplay implements Display {
+        private final List<Item> chiselGroupItems;
 
         public ChiselDisplay(String chiselGroup) {
-            chiselGroupItems = ChiselGroupLookup.getBlocksInGroup(chiselGroup, ServerTagManagerHolder.getTagManager().getItems());
+            chiselGroupItems = ChiselGroupLookup.getBlocksInGroup(chiselGroup, ServerTagManagerHolder.getTagManager().getOrCreateTagGroup(Registry.ITEM_KEY));
         }
 
         @Override
-        public @NotNull List<List<EntryStack>> getInputEntries() {
-            List<List<EntryStack>> entryStackLists = new ArrayList<>();
-            List<EntryStack> entryStacks = new ArrayList<>();
-            for (int i = 0; i < chiselGroupItems.size(); i++) {
-                Item item = chiselGroupItems.get(i);
-                entryStacks.add(EntryStack.create(new ItemStack(item, 1)));
+        public List<EntryIngredient> getInputEntries() {
+            List<EntryIngredient> entryIngredientList = new ArrayList<>();
+            for (Item item : chiselGroupItems) {
+                entryIngredientList.add(EntryIngredients.of(item));
             }
-            entryStackLists.add(entryStacks);
-            return entryStackLists;
+            return entryIngredientList;
         }
 
         @Override
-        public @NotNull List<List<EntryStack>> getResultingEntries() {
-            List<List<EntryStack>> entryStackLists = new ArrayList<>();
-            for (int i = 0; i < chiselGroupItems.size(); i++) {
-                List<EntryStack> entryStacks = new ArrayList<>();
-                Item item = chiselGroupItems.get(i);
-                entryStacks.add(EntryStack.create(new ItemStack(item, 1)));
-                entryStackLists.add(entryStacks);
+        public List<EntryIngredient> getOutputEntries() {
+            List<EntryIngredient> entryIngredientList = new ArrayList<>();
+            for (Item item : chiselGroupItems) {
+                entryIngredientList.add(EntryIngredients.of(item));
             }
-            
-            return entryStackLists;
+            return entryIngredientList;
         }
 
         @Override
-        public @NotNull Identifier getRecipeCategory() {
-            return new Identifier(Ref.MOD_ID, "chisel_recipes_category");
+        public CategoryIdentifier<?> getCategoryIdentifier() {
+            return CategoryIdentifier.of(Ref.MOD_ID, "chisel_recipes_category");
         }
-
     }
 
-    public static class ChiselCategory implements RecipeCategory<ChiselDisplay> {
-        public ChiselCategory() {
-            //
+    public static class ChiselCategory implements DisplayCategory<ChiselDisplay> {
+        private final Identifier TEXTURE = new Identifier(Ref.MOD_ID, "textures/rei_recipes.png");
+
+        @Override
+        public Renderer getIcon() {
+            return EntryStacks.of(ChiselDecorEntryPoint.ITEM_CHISEL, 1);
         }
 
         @Override
-        public @NotNull Identifier getIdentifier() {
-            return new Identifier(Ref.MOD_ID, "chisel_recipes_category");
+        public Text getTitle() {
+            return Text.of(I18n.translate("rei.chiseldecor.category"));
         }
 
         @Override
-        public @NotNull String getCategoryName() {
-            return I18n.translate("rei.chiseldecor.category");
-        }
-
-        @Override
-        public int getDisplayWidth(ChiselDisplay display) {
-            return 118;
+        public CategoryIdentifier<? extends ChiselDisplay> getCategoryIdentifier() {
+            return CategoryIdentifier.of(Ref.MOD_ID, "chisel_recipes_category");
         }
 
         @Override
         public int getDisplayHeight() {
-            return 260;
+            return 251;
+
         }
 
         @Override
-        public int getFixedRecipesPerPage() {
-            return 1;
+        public int getDisplayWidth(ChiselDisplay display) {
+            return 150;
         }
 
         @Override
-        public int getMaximumRecipePerPage() {
-            return 1;
-        }
-
-        @Override
-        public @NotNull EntryStack getLogo() {
-            return EntryStack.create(new ItemStack(ChiselDecorEntryPoint.ITEM_CHISEL, 1));
-        }
-        
-        @Override
-        public @NotNull List<Widget> setupDisplay(ChiselDisplay recipeDisplay, Rectangle bounds) {
+        public List<Widget> setupDisplay(ChiselDisplay display, Rectangle bounds) {
             List<Widget> widgets = new ArrayList<>();
-            Point startPoint = new Point(bounds.getMinX() + 5, bounds.getMinY() + 5);
-            widgets.addAll(RecipeCategory.super.setupDisplay(recipeDisplay, bounds));
-            widgets.add(Widgets.createTexturedWidget(new Identifier(Ref.MOD_ID, "textures/rei_recipes.png"), startPoint.x, startPoint.y, 108, 235));
+            Point startPoint = new Point(bounds.getMinX() + 21, bounds.getMinY() + 15);
+            widgets.add(Widgets.createRecipeBase(bounds));
+
+            // draw background texture
+            List<EntryIngredient> outputEntries = display.getOutputEntries();
+            int j = outputEntries.size();
+            int rows = (int)Math.ceil((double) j / 6.0d);
+            widgets.add(Widgets.createTexturedWidget(TEXTURE, startPoint.x, startPoint.y, 108, 236 - (18 * (10 - rows) + 1)));
+
+            ChiselDecorEntryPoint.LOGGER.info("printing " + rows + " rows (" + (236 - (16 * (10 - rows))) + "px)" );
+
             // draw slots
             List<Slot> slots = new ArrayList<>();
-            slots.add(Widgets.createSlot(new Point(startPoint.x + 1 + 45, startPoint.y + 1 + 16)).backgroundEnabled(false).markInput().entries(recipeDisplay.getInputEntries().get(0)));
-            int j = recipeDisplay.getResultingEntries().size();
+            slots.add(
+                Widgets.createSlot(new Point(startPoint.x + 1 + 45, startPoint.y + 1 + 16))
+                    .backgroundEnabled(false)
+                    .markInput()
+                    .entries(display.getInputEntries().get(0))
+            );
             for (int x = 0; x < 6; x++) {
-                for (int y = 0; y < 10; y++) {
+                for (int y = 0; y < rows; y++) {
                     if (6 * y + x >= j) {
                         break;
                     }
-                    slots.add(Widgets.createSlot(new Point(startPoint.x + 1 + 18 * x, startPoint.y + 1 + 55 + 18 * y)).markOutput().entries(recipeDisplay.getResultingEntries().get(6 * y + x)));
+                    slots.add(
+                        Widgets.createSlot(new Point(startPoint.x + 1 + 18 * x, startPoint.y + 1 + 55 + 18 * y))
+                            .markOutput()
+                            .entries(outputEntries.get(6 * y + x))
+                    );
                 }
             }
             widgets.addAll(slots);
+
             return widgets;
         }
-
     }
-
 }
